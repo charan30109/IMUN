@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your School MUN</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN for visual elements -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase
+        window.firebaseApp = null;
+        window.db = null;
+        window.auth = null;
+        window.currentUserId = null;
+        window.isFirebaseReady = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+                    apiKey: "AIzaSyA7XGEsxA6vjcO-4SIgOAi3tJYWsDTPsck",
+                    authDomain: "imun-1b55e.firebaseapp.com",
+                    projectId: "imun-1b55e",
+                    storageBucket: "imun-1b55e.firebasestorage.app",
+                    messagingSenderId: "918237684820",
+                    appId: "1:918237684820:web:d3a696c4ac5a1ebdc2f9c1"
+                };
+                // Corrected initialAuthToken variable usage
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
+
+                window.firebaseApp = initializeApp(firebaseConfig);
+                window.db = getFirestore(window.firebaseApp);
+                window.auth = getAuth(window.firebaseApp);
+
+                onAuthStateChanged(window.auth, async (user) => {
+                    if (user) {
+                        window.currentUserId = user.uid;
+                    } else {
+                        if (!initialAuthToken) {
+                            try {
+                                const anonUser = await signInAnonymously(window.auth);
+                                window.currentUserId = anonUser.user.uid;
+                            } catch (error) {
+                                console.error("Error signing in anonymously:", error);
+                            }
+                        }
+                    }
+                    window.isFirebaseReady = true;
+                    console.log("Firebase initialized and auth state ready. User ID:", window.currentUserId);
+                    // Update the user ID display if the element exists
+                    const userIdDisplay = document.getElementById('userIdDisplay');
+                    if (userIdDisplay) {
+                        userIdDisplay.textContent = window.currentUserId;
+                    }
+                });
+
+                if (initialAuthToken) {
+                    signInWithCustomToken(window.auth, initialAuthToken)
+                        .then((userCredential) => {
+                            window.currentUserId = userCredential.user.uid;
+                        })
+                        .catch((error) => {
+                            console.error("Error signing in with custom token:", error);
+                            signInAnonymously(window.auth)
+                                .then((userCredential) => window.currentUserId = userCredential.user.uid)
+                                .catch((anonError) => console.error("Error signing in anonymously after custom token failure:", anonError));
+                        });
+                }
+            } catch (error) {
+                console.error("Error during Firebase initialization:", error);
+            }
+        });
+
+        // Make Firebase functions globally accessible for the form submission
+        window.addDoc = addDoc;
+        window.collection = collection;
+        window.serverTimestamp = serverTimestamp;
+    </script>
+    <style>
+        /* Custom styles to override/complement Tailwind for better aesthetics */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0; /* Start invisible */
+        }
+
+        .animate-fade-in-up.delay-200 { animation-delay: 0.2s; }
+        .animate-fade-in-up.delay-400 { animation-delay: 0.4s; }
+        .animate-fade-in-up.delay-600 { animation-delay: 0.6s; }
+
+        /* General button styling */
+        .btn-primary {
+            @apply bg-indigo-600 text-white px-5 py-2 rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105;
+        }
+
+        /* Form input styling */
+        .form-input {
+            @apply shadow appearance-none border rounded-md w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 border-gray-300;
+        }
+        .form-input.error {
+            @apply border-red-500;
+        }
+        .error-message {
+            @apply text-red-500 text-xs italic mt-1;
+        }
+
+        /* Mobile menu specific styles */
+        .mobile-menu {
+            transition: max-height 0.3s ease-out;
+            overflow: hidden;
+            max-height: 0;
+        }
+        .mobile-menu.open {
+            max-height: 500px; /* Adjust as needed to fit content */
+        }
+    </style>
+</head>
+<body class="font-inter antialiased text-gray-800">
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
+        <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <a href="#home" class="flex items-center space-x-2">
+                    <img src="https://placehold.co/40x40/4a4e69/ffffff?text=MUN" alt="MUN Logo" class="rounded-full">
+                    <span class="text-xl font-bold text-indigo-700">Your School MUN</span>
+                </a>
+            </div>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex space-x-6">
+                <button onclick="scrollToSection('home')" class="text-gray-600 hover:text-indigo-700 transition-colors duration-200 py-2 px-3 rounded-md">Home</button>
+                <button onclick="scrollToSection('about')" class="text-gray-600 hover:text-indigo-700 transition-colors duration-200 py-2 px-3 rounded-md">About Us</button>
+                <button onclick="scrollToSection('committees')" class="text-gray-600 hover:text-indigo-700 transition-colors duration-200 py-2 px-3 rounded-md">Committees</button>
+                <button onclick="scrollToSection('secretariat')" class="text-gray-600 hover:text-indigo-700 transition-colors duration-200 py-2 px-3 rounded-md">Secretariat</button>
+                <button onclick="scrollToSection('executive-board')" class="text-gray-600 hover:text-indigo-700 transition-colors duration-200 py-2 px-3 rounded-md">Executive Board</button>
+                <button onclick="scrollToSection('partners')" class="text-gray-600 hover:text-indigo-700 transition-colors duration-200 py-2 px-3 rounded-md">Partners</button>
+                <button onclick="scrollToSection('contact')" class="text-gray-600 hover:text-indigo-700 transition-colors duration-200 py-2 px-3 rounded-md">Contact Us</button>
+                <button onclick="showRegistrationForm()" class="btn-primary" style="color: rgb(232, 0, 0);">Register Now</button>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-gray-600 hover:text-indigo-700 focus:outline-none">
+                    <svg id="menu-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+                    <svg id="x-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x hidden"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden bg-white shadow-lg py-4 mobile-menu">
+            <nav class="flex flex-col items-center space-y-4">
+                <button onclick="scrollToSection('home')" class="text-gray-700 hover:text-indigo-700 text-lg py-2">Home</button>
+                <button onclick="scrollToSection('about')" class="text-gray-700 hover:text-indigo-700 text-lg py-2">About Us</button>
+                <button onclick="scrollToSection('committees')" class="text-gray-700 hover:text-indigo-700 text-lg py-2">Committees</button>
+                <button onclick="scrollToSection('secretariat')" class="text-gray-700 hover:text-indigo-700 text-lg py-2">Secretariat</button>
+                <button onclick="scrollToSection('executive-board')" class="text-gray-700 hover:text-indigo-700 text-lg py-2">Executive Board</button>
+                <button onclick="scrollToSection('partners')" class="text-gray-700 hover:text-indigo-700 text-lg py-2">Partners</button>
+                <button onclick="scrollToSection('contact')" class="text-gray-700 hover:text-indigo-700 text-lg py-2">Contact Us</button>
+                <button onclick="showRegistrationForm()" class="bg-indigo-600 text-white px-6 py-3 rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 w-auto">Register Now</button>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content" class="pt-16">
+        <!-- Hero Section -->
+        <section id="home" class="relative h-screen bg-cover bg-center flex items-center justify-center text-center p-4" style="background-image: url('https://placehold.co/1920x1080/2a2a72/ffffff?text=MUN+Conference');">
+            <div class="absolute inset-0 bg-black opacity-60"></div>
+            <div class="relative z-10 text-white max-w-4xl mx-auto">
+                <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-4 animate-fade-in-up">
+                    The Intelli Model UN Assembly
+                </h1>
+                <p class="text-lg md:text-xl mb-8 opacity-90 animate-fade-in-up delay-200">
+                    Empowering the next generation of leaders through diplomacy and debate.
+                </p>
+
+                <!-- Countdown Timer -->
+                <div id="countdown-timer" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10 text-center animate-fade-in-up delay-400">
+                    <div class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm p-4 rounded-lg shadow-xl border border-white border-opacity-30">
+                        <span id="days" class="block text-4xl md:text-5xl font-bold">00</span>
+                        <span class="block text-sm uppercase">days</span>
+                    </div>
+                    <div class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm p-4 rounded-lg shadow-xl border border-white border-opacity-30">
+                        <span id="hours" class="block text-4xl md:text-5xl font-bold">00</span>
+                        <span class="block text-sm uppercase">hours</span>
+                    </div>
+                    <div class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm p-4 rounded-lg shadow-xl border border-white border-opacity-30">
+                        <span id="minutes" class="block text-4xl md:text-5xl font-bold">00</span>
+                        <span class="block text-sm uppercase">minutes</span>
+                    </div>
+                    <div class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm p-4 rounded-lg shadow-xl border border-white border-opacity-30">
+                        <span id="seconds" class="block text-4xl md:text-5xl font-bold">00</span>
+                        <span class="block text-sm uppercase">seconds</span>
+                    </div>
+                </div>
+
+                <button onclick="showRegistrationForm()" class="btn-primary text-lg md:text-xl px-8 py-4 shadow-xl animate-fade-in-up delay-600" style="color: rgb(190, 27, 18);">
+                    Register Now for <span id="conference-year"></span>
+                </button>
+            </div>
+        </section>
+
+        <!-- About Us Section -->
+        <section id="about" class="py-16 bg-gray-50">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-4xl font-bold text-indigo-700 mb-8">About Us</h2>
+                <div class="max-w-3xl mx-auto text-lg text-gray-700 leading-relaxed">
+                    <p class="mb-4">
+                        Intelli School is proud to present IntelliMUN, an annual conference dedicated to fostering a deeper understanding of international relations, diplomacy, and global issues among high school students. At Intelli, we believe in providing a dynamic platform for young minds to engage in constructive debate, critical thinking, and collaborative problem-solving, perfectly aligning with our school's commitment to holistic education and global citizenship. IntelliMUN aims to empower the next generation of leaders and diplomats right here within our school community.
+                    </p>
+                    <p class="mb-4">
+                        Our conference aims to simulate the real-world proceedings of the United Nations, allowing delegates to step into the shoes of diplomats and represent various countries. Through rigorous research, compelling speeches, and strategic negotiations, participants develop essential skills in public speaking, leadership, and cross-cultural communication.
+                    </p>
+                    <p>
+As a leading institution committed to intellectual growth and character development, Intelli School champions initiatives like IntelliMUN. Our Model United Nations conference is designed to extend classroom learning into real-world applications, encouraging students to research complex global challenges, hone their public speaking and negotiation skills, and develop empathy for diverse perspectives. IntelliMUN reflects Intelli School's dedication to nurturing well-rounded individuals prepared to make a significant impact on the world.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Committees Section -->
+        <section id="committees" class="py-16 bg-white">
+            <div class="container mx-auto px-4">
+                <h2 class="text-4xl font-bold text-indigo-700 text-center mb-12">Our Committees</h2>
+                <div id="committees-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    <!-- Committees will be dynamically loaded here by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Secretariat Section -->
+        <section id="secretariat" class="py-16 bg-gray-50">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-4xl font-bold text-indigo-700 mb-12">The Secretariat</h2>
+                <div id="secretariat-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                    <!-- Secretariat members will be dynamically loaded here by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Executive Board Section -->
+        <section id="executive-board" class="py-16 bg-white">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-4xl font-bold text-indigo-700 mb-12">Executive Board</h2>
+                <div id="executive-board-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                    <!-- Executive Board members will be dynamically loaded here by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Partners Section -->
+        <section id="partners" class="py-16 bg-gray-50">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-4xl font-bold text-indigo-700 mb-12">Our Esteemed Partners</h2>
+                <div id="partners-container" class="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+                    <!-- Partners will be dynamically loaded here by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Us Section -->
+        <section id="contact" class="py-16 bg-indigo-700 text-white">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-4xl font-bold mb-8">Contact Us</h2>
+                <p class="text-lg mb-8 max-w-2xl mx-auto opacity-90">
+                    Have questions or need assistance? Feel free to reach out to us. We're here to help!
+                </p>
+                <div class="flex flex-col md:flex-row justify-center items-center gap-8">
+                    <div class="flex items-center space-x-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mail"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        <a href="mailto:info@yourschoolmun.com" class="text-lg hover:underline">intellischoolmun25@gmail.com</a>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-phone"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        <a href="tel:+911234567890" class="text-lg hover:underline">+91 9797145945</a>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <a href="https://maps.app.goo.gl/mM7kdbDZzmKJLEPF8" class="text-lg" target="_blank" >Intelli School Marikavalasa,Visakhapatnam 530041.</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Registration Form Section (Initially hidden) -->
+    <section id="registration-form-section" class="py-16 bg-gray-50 min-h-screen hidden">
+        <div class="container mx-auto px-4">
+            <button onclick="hideRegistrationForm()" class="mb-8 flex items-center text-indigo-600 hover:text-indigo-800 transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+                Back to Home
+            </button>
+            <h2 class="text-4xl font-bold text-indigo-700 text-center mb-8">Delegate Registration</h2>
+            <p class="text-center text-gray-600 mb-10 max-w-2xl mx-auto">
+                Please fill out the form below to register for Your School Model United Nations. All fields marked with an asterisk (*) are required.
+            </p>
+
+            <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-xl border border-gray-200">
+                <div id="submit-message" class="hidden p-4 mb-6 rounded-md"></div>
+
+                <form id="registration-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Full Name -->
+                    <div>
+                        <label for="fullName" class="block text-gray-700 text-sm font-bold mb-2">Full Name *</label>
+                        <input type="text" id="fullName" name="fullName" class="form-input" placeholder="Your Full Name" required>
+                        <p id="fullName-error" class="error-message"></p>
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email *</label>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="your.email@example.com" required>
+                        <p id="email-error" class="error-message"></p>
+                    </div>
+
+                    <!-- School Name Dropdown -->
+                    <div>
+                        <label for="schoolName" class="block text-gray-700 text-sm font-bold mb-2">School Name *</label>
+                        <select id="schoolName" name="schoolName" class="form-input" required>
+                            <option value="">Select your school</option>
+                            <!-- Options will be populated by JS -->
+                        </select>
+                        <p id="schoolName-error" class="error-message"></p>
+                    </div>
+
+                    <!-- Other School Name (conditionally hidden) -->
+                    <div id="otherSchoolName-group" class="hidden">
+                        <label for="otherSchoolName" class="block text-gray-700 text-sm font-bold mb-2">Other School Name *</label>
+                        <input type="text" id="otherSchoolName" name="otherSchoolName" class="form-input" placeholder="Enter your school's name">
+                        <p id="otherSchoolName-error" class="error-message"></p>
+                    </div>
+
+                    <!-- Grade/Year Dropdown -->
+                    <div>
+                        <label for="grade" class="block text-gray-700 text-sm font-bold mb-2">Grade/Year *</label>
+                        <select id="grade" name="grade" class="form-input" required>
+                            <option value="">Select your grade</option>
+                            <!-- Options will be populated by JS -->
+                        </select>
+                        <p id="grade-error" class="error-message"></p>
+                    </div>
+
+                    <!-- Committee Preference 1 -->
+                    <div>
+                        <label for="committeePreference1" class="block text-gray-700 text-sm font-bold mb-2">Committee Preference 1 *</label>
+                        <select id="committeePreference1" name="committeePreference1" class="form-input" required>
+                            <option value="">Select a committee</option>
+                            <!-- Options will be populated by JS -->
+                        </select>
+                        <p id="committeePreference1-error" class="error-message"></p>
+                    </div>
+
+                    <!-- Committee Preference 2 -->
+                    <div>
+                        <label for="committeePreference2" class="block text-gray-700 text-sm font-bold mb-2">Committee Preference 2 (Optional)</label>
+                        <select id="committeePreference2" name="committeePreference2" class="form-input">
+                            <option value="">Select a committee (Optional)</option>
+                            <!-- Options will be populated by JS -->
+                        </select>
+                    </div>
+
+                    <!-- Previous MUN Experience -->
+                    <div>
+                        <label for="munExperience" class="block text-gray-700 text-sm font-bold mb-2">Previous MUN Experience? *</label>
+                        <select id="munExperience" name="munExperience" class="form-input" required>
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                        <p id="munExperience-error" class="error-message"></p>
+                    </div>
+
+                    <!-- Number of Previous MUNs (conditionally rendered) -->
+                    <div id="previousMunCount-group" class="hidden">
+                        <label for="previousMunCount" class="block text-gray-700 text-sm font-bold mb-2">Number of Previous MUNs Attended *</label>
+                        <input type="number" id="previousMunCount" name="previousMunCount" class="form-input" placeholder="e.g., 2" min="0">
+                        <p id="previousMunCount-error" class="error-message"></p>
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div>
+                        <label for="phoneNumber" class="block text-gray-700 text-sm font-bold mb-2">Phone Number *</label>
+                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-input" placeholder="e.g., +919876543210" required>
+                        <p id="phoneNumber-error" class="error-message"></p>
+                    </div>
+
+                    <!-- Dietary Restrictions -->
+                    <div class="md:col-span-2">
+                        <label for="dietaryRestrictions" class="block text-gray-700 text-sm font-bold mb-2">Dietary Restrictions (Optional)</label>
+                        <textarea id="dietaryRestrictions" name="dietaryRestrictions" rows="3" class="form-input" placeholder="e.g., Vegetarian, Gluten-free, etc."></textarea>
+                    </div>
+
+                    <!-- Payment Method Section -->
+                    <div class="md:col-span-2 bg-indigo-50 p-6 rounded-lg border border-indigo-200">
+                        <h3 class="text-xl font-bold text-indigo-800 mb-4">Payment Information</h3>
+                        <p class="text-gray-700 mb-4">
+                            Please scan the QR code below to make your payment. After successful payment, take a screenshot and send it to us on WhatsApp at <a href="https://wa.me/919797145945" target="_blank" class="text-indigo-600 hover:underline font-medium">+91 9797145945</a>.
+                        </p>
+                        <div class="flex justify-center mb-6">
+                            <img src="https://placehold.co/200x200/000000/FFFFFF?text=QR+Code" alt="Payment QR Code" class="w-48 h-48 rounded-md shadow-md border border-gray-300">
+                        </div>
+                        <div>
+                            <label for="paymentConfirmation" class="block text-gray-700 text-sm font-bold mb-2">
+                                Payment Confirmation *
+                            </label>
+                            <input type="checkbox" id="paymentConfirmation" name="paymentConfirmation" class="form-checkbox h-5 w-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" required>
+                            <span class="ml-2 text-gray-700">I have scanned the QR code and sent the screenshot to the provided WhatsApp number.</span>
+                            <p id="paymentConfirmation-error" class="error-message"></p>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="md:col-span-2 text-center">
+                        <button type="submit" id="submit-button" class="btn-primary px-8 py-3">
+                            <span id="submit-text">Submit Registration</span>
+                            <svg id="loader-icon" class="animate-spin h-5 w-5 text-white hidden mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <!-- Display current userId for debugging/reference -->
+            <p class="text-center text-gray-500 text-sm mt-8">
+              Your User ID: <span id="userIdDisplay" class="font-mono break-all">Loading...</span>
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+            <div class="mb-4 md:mb-0">
+                <p>&copy; <span id="current-year"></span> Your School MUN. All rights reserved.</p>
+                <p class="text-sm text-gray-400">Designed with passion for diplomacy.</p>
+            </div>
+            <div class="flex space-x-6">
+                <a href="https://facebook.com/yourschoolmun" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-facebook"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                </a>
+                <a href="https://instagram.com/yourschoolmun" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-instagram"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                </a>
+                <a href="https://linkedin.com/company/yourschoolmun" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-linkedin"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/></svg>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Data for sections
+        const committeesData = [
+            { id: 'United_Nations_General_Assembly', name: 'United Nations General Assembly', description: 'Engaging all member states in comprehensive discussions on pressing international matters, aiming to forge consensus and recommend solutions for global challenges.', image: 'https://placehold.co/400x250/a8dadc/000000?text=UNGA' },
+            { id: 'United_Nations_Human_Rights_Council', name: 'UN Human Rights Council', description: 'Promoting and protecting human rights worldwide, investigating abuses.', image: 'https://placehold.co/400x250/fca311/000000?text=UNHRC' },
+            { id: 'United_Nations_General_Assembly_First_Committee', name: 'Disarmament and International Security Committee (DISEC)', description: 'Deliberating on disarmament, global security, and arms control.', image: 'https://placehold.co/400x250/e0b1cb/000000?text=DISEC' },
+        ];
+
+        const secretariatMembersData = [
+            { name: 'Sunny Linn', title: 'Secretary-General', image: 'https://placehold.co/150x150/8d99ae/ffffff?text=JD' },
+            { name: 'Tatvika', title: 'Director-General', image: 'https://placehold.co/150x150/8d99ae/ffffff?text=JS' },
+            { name: 'Alice Johnson', title: 'Under-Secretary-General (Logistics)', image: 'https://placehold.co/150x150/8d99ae/ffffff?text=AJ' },
+            { name: 'Bob Williams', title: 'Under-Secretary-General (Delegate Affairs)', image: 'https://placehold.co/150x150/8d99ae/ffffff?text=BW' },
+        ];
+
+        const executiveBoardMembersData = [
+            { name: 'Emily White', committee: 'UNSC - Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=EW' },
+            { name: 'David Green', committee: 'UNHRC - Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=DG' },
+            { name: 'Sarah Brown', committee: 'DISEC - Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=SB' },
+            { name: 'Michael Lee', committee: 'SPECPOL - Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=ML' },
+        ];
+
+        const partnersData = [
+            { name: 'Partner 1', logo: 'https://placehold.co/150x80/f0f0f0/000000?text=Partner+1' },
+            { name: 'Partner 2', logo: 'https://placehold.co/150x80/f0f0f0/000000?text=Partner+2' },
+            { name: 'Partner 3', logo: 'https://placehold.co/150x80/f0f0f0/000000?text=Partner+3' },
+            { name: 'Partner 4', logo: 'https://placehold.co/150x80/f0f0f0/000000?text=Partner+4' },
+        ];
+
+        // New Data for Schools and Grades
+        const visakhapatnamSchools = [
+            "Delhi Public School, Visakhapatnam",
+            "Oakridge International School, Visakhapatnam",
+            "Visakha Valley School",
+            "Kendriya Vidyalaya No. 1, Nausena Bagh",
+            "St. Joseph's Secondary School",
+            "Vignan Global Gen School",
+            "Sri Prakash Vidyaniketan",
+            "Ameya World School",
+            "Other" // Always keep "Other" as the last option
+        ];
+
+        const grades = ["9th", "10th", "11th", "12th"];
+
+        // Conference Date for Countdown
+        const conferenceDate = new Date(2025, 10, 15, 9, 0, 0); // November 15, 2025, 9:00 AM
+
+        // --- Utility Functions ---
+
+        function calculateTimeLeft() {
+            const difference = +conferenceDate - +new Date();
+            let timeLeft = {};
+
+            if (difference > 0) {
+                timeLeft = {
+                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((difference / 1000 / 60) % 60),
+                    seconds: Math.floor((difference / 1000) % 60),
+                };
+            } else {
+                timeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+            }
+            return timeLeft;
+        }
+
+        function updateCountdown() {
+            const timeLeft = calculateTimeLeft();
+            document.getElementById('days').textContent = timeLeft.days.toString().padStart(2, '0');
+            document.getElementById('hours').textContent = timeLeft.hours.toString().padStart(2, '0');
+            document.getElementById('minutes').textContent = timeLeft.minutes.toString().padStart(2, '0');
+            document.getElementById('seconds').textContent = timeLeft.seconds.toString().padStart(2, '0');
+            document.getElementById('conference-year').textContent = conferenceDate.getFullYear();
+        }
+
+        function scrollToSection(id) {
+            document.getElementById('main-content').classList.remove('hidden');
+            document.getElementById('registration-form-section').classList.add('hidden');
+            const section = document.getElementById(id);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+            }
+            // Close mobile menu if open
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuIcon = document.getElementById('menu-icon');
+            const xIcon = document.getElementById('x-icon');
+            if (mobileMenu.classList.contains('open')) {
+                mobileMenu.classList.remove('open');
+                menuIcon.classList.remove('hidden');
+                xIcon.classList.add('hidden');
+            }
+        }
+
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuIcon = document.getElementById('menu-icon');
+            const xIcon = document.getElementById('x-icon');
+            mobileMenu.classList.toggle('open');
+            menuIcon.classList.toggle('hidden');
+            xIcon.classList.toggle('hidden');
+        }
+
+        function showRegistrationForm() {
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('registration-form-section').classList.remove('hidden');
+            // Close mobile menu if open
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuIcon = document.getElementById('menu-icon');
+            const xIcon = document.getElementById('x-icon');
+            if (mobileMenu.classList.contains('open')) {
+                mobileMenu.classList.remove('open');
+                menuIcon.classList.remove('hidden');
+                xIcon.classList.add('hidden');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top of the form
+        }
+
+        function hideRegistrationForm() {
+            document.getElementById('main-content').classList.remove('hidden');
+            document.getElementById('registration-form-section').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top of the page
+        }
+
+        // --- Dynamic Content Loading ---
+
+        function loadCommittees() {
+            const container = document.getElementById('committees-container');
+            let html = '';
+            committeesData.forEach(committee => {
+                html += `
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 hover:shadow-xl border border-gray-200">
+                        <img src="${committee.image}" alt="${committee.name}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x250/cccccc/333333?text=${committee.name.split(' ').map(n => n[0]).join('')}';">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-semibold text-gray-900 mb-3">${committee.name}</h3>
+                            <p class="text-gray-700 text-base leading-relaxed mb-4">${committee.description}</p>
+                            <a href="https://en.wikipedia.org/wiki/${committee.id}" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200" target="_blank">
+                                Learn More <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link ml-1"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function loadSecretariat() {
+            const container = document.getElementById('secretariat-container');
+            let html = '';
+            secretariatMembersData.forEach(member => {
+                html += `
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col items-center transform transition-transform duration-300 hover:scale-105 hover:shadow-lg">
+                        <img src="${member.image}" alt="${member.name}" class="w-32 h-32 rounded-full object-cover mb-4 border-4 border-indigo-200" onerror="this.onerror=null;this.src='https://placehold.co/150x150/8d99ae/ffffff?text=${member.name.split(' ').map(n => n[0]).join('')}';">
+                        <h3 class="text-xl font-semibold text-gray-900">${member.name}</h3>
+                        <p class="text-indigo-600 text-md font-medium">${member.title}</p>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function loadExecutiveBoard() {
+            const container = document.getElementById('executive-board-container');
+            let html = '';
+            executiveBoardMembersData.forEach(member => {
+                html += `
+                    <div class="bg-gray-50 rounded-lg shadow-md p-6 flex flex-col items-center transform transition-transform duration-300 hover:scale-105 hover:shadow-lg">
+                        <img src="${member.image}" alt="${member.name}" class="w-32 h-32 rounded-full object-cover mb-4 border-4 border-blue-200" onerror="this.onerror=null;this.src='https://placehold.co/150x150/a2d2ff/ffffff?text=${member.name.split(' ').map(n => n[0]).join('')}';">
+                        <h3 class="text-xl font-semibold text-gray-900">${member.name}</h3>
+                        <p class="text-blue-600 text-md font-medium">${member.committee}</p>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function loadPartners() {
+            const container = document.getElementById('partners-container');
+            let html = '';
+            partnersData.forEach(partner => {
+                html += `
+                    <div class="bg-white p-4 rounded-lg shadow-md transform transition-transform duration-300 hover:scale-105">
+                        <img src="${partner.logo}" alt="${partner.name}" class="h-20 max-w-full object-contain" onerror="this.onerror=null;this.src='https://placehold.co/150x80/f0f0f0/000000?text=${partner.name}';">
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function populateCommitteeSelects() {
+            const select1 = document.getElementById('committeePreference1');
+            const select2 = document.getElementById('committeePreference2');
+
+            // Clear existing options first to prevent duplicates on re-render
+            select1.innerHTML = '<option value="">Select a committee</option>';
+            select2.innerHTML = '<option value="">Select a committee (Optional)</option>';
+
+            committeesData.forEach(committee => {
+                const option1 = document.createElement('option');
+                option1.value = committee.name;
+                option1.textContent = committee.name;
+                select1.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = committee.name;
+                option2.textContent = committee.name;
+                select2.appendChild(option2);
+            });
+        }
+
+        // New function to populate school dropdown
+        function populateSchoolSelect() {
+            const select = document.getElementById('schoolName');
+            select.innerHTML = '<option value="">Select your school</option>'; // Clear existing options
+
+            visakhapatnamSchools.forEach(school => {
+                const option = document.createElement('option');
+                option.value = school;
+                option.textContent = school;
+                select.appendChild(option);
+            });
+        }
+
+        // New function to populate grade dropdown
+        function populateGradeSelect() {
+            const select = document.getElementById('grade');
+            select.innerHTML = '<option value="">Select your grade</option>'; // Clear existing options
+
+            grades.forEach(grade => {
+                const option = document.createElement('option');
+                option.value = grade;
+                option.textContent = grade;
+                select.appendChild(option);
+            });
+        }
+
+
+        // --- Form Handling ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+
+            // Initialize countdown
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+
+            // Load dynamic content sections
+            loadCommittees();
+            loadSecretariat();
+            loadExecutiveBoard();
+            loadPartners();
+            populateCommitteeSelects();
+            populateSchoolSelect(); // Call new function to populate school dropdown
+            populateGradeSelect();  // Call new function to populate grade dropdown
+
+            // Mobile menu toggle
+            document.getElementById('mobile-menu-button').addEventListener('click', toggleMobileMenu);
+
+            // Form validation and submission
+            const registrationForm = document.getElementById('registration-form');
+            const munExperienceSelect = document.getElementById('munExperience');
+            const previousMunCountGroup = document.getElementById('previousMunCount-group');
+            const previousMunCountInput = document.getElementById('previousMunCount');
+            const submitButton = document.getElementById('submit-button');
+            const submitText = document.getElementById('submit-text');
+            const loaderIcon = document.getElementById('loader-icon');
+            const submitMessageDiv = document.getElementById('submit-message');
+            const paymentConfirmationCheckbox = document.getElementById('paymentConfirmation');
+
+            // New elements for school dropdown logic
+            const schoolNameSelect = document.getElementById('schoolName');
+            const otherSchoolNameGroup = document.getElementById('otherSchoolName-group');
+            const otherSchoolNameInput = document.getElementById('otherSchoolName');
+
+
+            // Show/hide other school name input based on selection
+            schoolNameSelect.addEventListener('change', () => {
+                if (schoolNameSelect.value === 'Other') {
+                    otherSchoolNameGroup.classList.remove('hidden');
+                    otherSchoolNameInput.setAttribute('required', 'true');
+                } else {
+                    otherSchoolNameGroup.classList.add('hidden');
+                    otherSchoolNameInput.removeAttribute('required');
+                    otherSchoolNameInput.value = ''; // Clear value if hidden
+                    document.getElementById('otherSchoolName-error').textContent = ''; // Clear error
+                    otherSchoolNameInput.classList.remove('border-red-500');
+                }
+            });
+
+
+            // Show/hide previous MUN count based on experience
+            munExperienceSelect.addEventListener('change', () => {
+                if (munExperienceSelect.value === 'Yes') {
+                    previousMunCountGroup.classList.remove('hidden');
+                    previousMunCountInput.setAttribute('required', 'true');
+                } else {
+                    previousMunCountGroup.classList.add('hidden');
+                    previousMunCountInput.removeAttribute('required');
+                    previousMunCountInput.value = ''; // Clear value if hidden
+                    document.getElementById('previousMunCount-error').textContent = ''; // Clear error
+                    previousMunCountInput.classList.remove('border-red-500');
+                }
+            });
+
+            // Clear all errors
+            function clearErrors() {
+                document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+                document.querySelectorAll('.form-input').forEach(el => el.classList.remove('border-red-500'));
+                document.getElementById('paymentConfirmation').classList.remove('border-red-500'); // Clear checkbox error
+            }
+
+            // Display a single error for a field
+            function displayError(fieldId, message) {
+                const input = document.getElementById(fieldId);
+                const errorDiv = document.getElementById(`${fieldId}-error`);
+                if (input) {
+                    // For checkboxes, apply error class to the checkbox itself or its container if needed
+                    if (input.type === 'checkbox') {
+                        input.classList.add('border-red-500'); // Or apply to parent div if styling needs to highlight the whole control
+                    } else {
+                        input.classList.add('border-red-500');
+                    }
+                }
+                if (errorDiv) errorDiv.textContent = message;
+            }
+
+            // Validate form fields
+            function validateForm() {
+                clearErrors();
+                let isValid = true;
+
+                const fields = [
+                    { id: 'fullName', required: true, message: 'Full Name is required.' },
+                    { id: 'email', required: true, message: 'Email is required.', pattern: /\S+@\S+\.\S+/, patternMessage: 'Email address is invalid.' },
+                    { id: 'schoolName', required: true, message: 'Please select your school.' }, // Updated message for dropdown
+                    { id: 'grade', required: true, message: 'Please select your grade.' }, // Updated message for dropdown
+                    { id: 'committeePreference1', required: true, message: 'Committee Preference 1 is required.' },
+                    { id: 'munExperience', required: true, message: 'Please select your MUN experience.' },
+                    { id: 'phoneNumber', required: true, message: 'Phone Number is required.' },
+                    { id: 'paymentConfirmation', required: true, message: 'You must confirm payment and screenshot submission.' }
+                ];
+
+                fields.forEach(field => {
+                    const input = document.getElementById(field.id);
+                    if (input) {
+                        if (input.type === 'checkbox') {
+                            if (field.required && !input.checked) {
+                                displayError(field.id, field.message);
+                                isValid = false;
+                            }
+                        } else {
+                            const value = input.value.trim();
+                            if (field.required && !value) {
+                                displayError(field.id, field.message);
+                                isValid = false;
+                            } else if (field.pattern && value && !field.pattern.test(value)) {
+                                displayError(field.id, field.patternMessage);
+                                isValid = false;
+                            }
+                        }
+                    }
+                });
+
+                // Conditional validation for previousMunCount
+                if (munExperienceSelect.value === 'Yes' && !previousMunCountInput.value.trim()) {
+                    displayError('previousMunCount', 'Please specify number of MUNs attended.');
+                    isValid = false;
+                }
+
+                // Conditional validation for otherSchoolName
+                if (schoolNameSelect.value === 'Other' && !otherSchoolNameInput.value.trim()) {
+                    displayError('otherSchoolName', 'Please enter your school name.');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            registrationForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                submitMessageDiv.classList.add('hidden');
+                submitMessageDiv.textContent = '';
+                submitMessageDiv.classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+
+                if (!validateForm()) {
+                    submitMessageDiv.textContent = 'Please correct the errors in the form.';
+                    submitMessageDiv.classList.remove('hidden');
+                    submitMessageDiv.classList.add('bg-red-100', 'text-red-700');
+                    return;
+                }
+
+                if (!window.db || !window.currentUserId || !window.isFirebaseReady) {
+                    submitMessageDiv.textContent = 'Database not ready. Please try again in a moment.';
+                    submitMessageDiv.classList.remove('hidden');
+                    submitMessageDiv.classList.add('bg-red-100', 'text-red-700');
+                    console.error("Firestore, userId, or Firebase readiness not available.");
+                    return;
+                }
+
+                submitButton.disabled = true;
+                submitText.classList.add('hidden');
+                loaderIcon.classList.remove('hidden');
+                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+                try {
+                    // Determine the final school name
+                    const selectedSchool = schoolNameSelect.value;
+                    const finalSchoolName = selectedSchool === 'Other' ? otherSchoolNameInput.value.trim() : selectedSchool;
+
+                    const formData = {
+                        fullName: document.getElementById('fullName').value,
+                        email: document.getElementById('email').value,
+                        schoolName: finalSchoolName, // Use the determined school name
+                        grade: document.getElementById('grade').value, // Get value from dropdown
+                        committeePreference1: document.getElementById('committeePreference1').value,
+                        committeePreference2: document.getElementById('committeePreference2').value,
+                        munExperience: document.getElementById('munExperience').value,
+                        previousMunCount: document.getElementById('previousMunCount').value,
+                        phoneNumber: document.getElementById('phoneNumber').value,
+                        dietaryRestrictions: document.getElementById('dietaryRestrictions').value,
+                        paymentMethod: 'QR Code',
+                        paymentConfirmation: paymentConfirmationCheckbox.checked ? 'Confirmed via WhatsApp screenshot' : 'Not confirmed',
+                        timestamp: window.serverTimestamp(),
+                        userId: window.currentUserId,
+                    };
+
+                    const registrationsCollectionRef = window.collection(window.db, `artifacts/${window.__app_id}/users/${window.currentUserId}/registrations`);
+                    await window.addDoc(registrationsCollectionRef, formData);
+
+                    submitMessageDiv.textContent = 'Registration successful! Thank you for registering. Please ensure you have sent the payment screenshot on WhatsApp.';
+                    submitMessageDiv.classList.remove('hidden');
+                    submitMessageDiv.classList.add('bg-green-100', 'text-green-700');
+                    registrationForm.reset(); // Clear form fields
+                    munExperienceSelect.dispatchEvent(new Event('change')); // Reset conditional field visibility
+                    schoolNameSelect.dispatchEvent(new Event('change')); // Reset conditional "other school" field visibility
+                    clearErrors(); // Clear any remaining errors
+                } catch (error) {
+                    console.error("Error adding document: ", error);
+                    submitMessageDiv.textContent = 'Error submitting registration. Please try again.';
+                    submitMessageDiv.classList.remove('hidden');
+                    submitMessageDiv.classList.add('bg-red-100', 'text-red-700');
+                } finally {
+                    submitButton.disabled = false;
+                    submitText.classList.remove('hidden');
+                    loaderIcon.classList.add('hidden');
+                    submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
