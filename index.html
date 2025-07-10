@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IMUN</title>
+    <link rel="icon" type="image/x-icon" href="src/Logo.jpeg">
+    <title>ISMUN</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons CDN for visual elements -->
@@ -159,7 +160,7 @@
             <div class="flex items-center">
                 <a href="#home" class="flex items-center space-x-2">
                     <img src="src/Logo.jpeg" alt="MUN Logo" class="rounded-full" height="75px" width="75px">
-                    <span class="text-xl font-bold text-indigo-700">IMUN</span>
+                    <span class="text-xl font-bold text-indigo-700">ISMUN</span>
                 </a>
             </div>
 
@@ -243,13 +244,13 @@
                 <h2 class="text-4xl font-bold text-indigo-700 mb-8">About Us</h2>
                 <div class="max-w-3xl mx-auto text-lg text-gray-700 leading-relaxed">
                     <p class="mb-4">
-                        Intelli School is proud to present IMUN, an annual conference dedicated to fostering a deeper understanding of international relations, diplomacy, and global issues among high school students. At Intelli, we believe in providing a dynamic platform for young minds to engage in constructive debate, critical thinking, and collaborative problem-solving, perfectly aligning with our school's commitment to holistic education and global citizenship. IMUN aims to empower the next generation of leaders and diplomats right here within our school community.
+                        Intelli School is proud to present ISMUN, an annual conference dedicated to fostering a deeper understanding of international relations, diplomacy, and global issues among high school students. At Intelli, we believe in providing a dynamic platform for young minds to engage in constructive debate, critical thinking, and collaborative problem-solving, perfectly aligning with our school's commitment to holistic education and global citizenship. ISMUN aims to empower the next generation of leaders and diplomats right here within our school community.
                     </p>
                     <p class="mb-4">
                         Our conference aims to simulate the real-world proceedings of the United Nations, allowing delegates to step into the shoes of diplomats and represent various countries. Through rigorous research, compelling speeches, and strategic negotiations, participants develop essential skills in public speaking, leadership, and cross-cultural communication.
                     </p>
                     <p>
-As a leading institution committed to intellectual growth and character development, Intelli School champions initiatives like IMUN. Our Model United Nations conference is designed to extend classroom learning into real-world applications, encouraging students to research complex global challenges, hone their public speaking and negotiation skills, and develop empathy for diverse perspectives. IMUN reflects Intelli School's dedication to nurturing well-rounded individuals prepared to make a significant impact on the world.
+As a leading institution committed to intellectual growth and character development, Intelli School champions initiatives like ISMUN. Our Model United Nations conference is designed to extend classroom learning into real-world applications, encouraging students to research complex global challenges, hone their public speaking and negotiation skills, and develop empathy for diverse perspectives. ISMUN reflects Intelli School's dedication to nurturing well-rounded individuals prepared to make a significant impact on the world.
                     </p>
                 </div>
             </div>
@@ -327,13 +328,13 @@ As a leading institution committed to intellectual growth and character developm
             </button>
             <h2 class="text-4xl font-bold text-indigo-700 text-center mb-8">Delegate Registration</h2>
             <p class="text-center text-gray-600 mb-10 max-w-2xl mx-auto">
-                Please fill out the form below to register for Your School Model United Nations. All fields marked with an asterisk (*) are required.
+                Please fill out the form below to register for ISMUN. All fields marked with an asterisk (*) are required.
             </p>
 
             <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-xl border border-gray-200">
                 <div id="submit-message" class="hidden p-4 mb-6 rounded-md"></div>
 
-                <form id="registration-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form id="registration-form" class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
                     <!-- Full Name -->
                     <div>
                         <label for="fullName" class="block text-gray-700 text-sm font-bold mb-2">Full Name *</label>
@@ -342,8 +343,8 @@ As a leading institution committed to intellectual growth and character developm
                     </div>
 
                     <div>
-                        <label for="Country" class="block text-gray-700 text-sm font-bold mb-2">Country *</label>
-                        <input type="text" id="Country" name="Country" class="form-input" placeholder="Your country name" required>
+                        <label for="Country" class="block text-gray-700 text-sm font-bold mb-2">Country Preference *</label>
+                        <input type="text" id="Country" name="Country" class="form-input" placeholder="country Preference" required>
                         <p id="fullName-error" class="error-message"></p>
                     </div>
 
@@ -382,10 +383,10 @@ As a leading institution committed to intellectual growth and character developm
                     </div>
 
                     <!-- Committee Preference 1 -->
-                    <div>
+                    <div class="w-full md:max-w-md">
                         <label for="committeePreference1" class="block text-gray-700 text-sm font-bold mb-2">Committee Preference 1 *</label>
-                        <select id="committeePreference1" name="committeePreference1" class="form-input" required>
-                            <option value="">Select a committee</option>
+                        <select id="committeePreference1" name="committeePreference1" class="form-input truncate" required>
+                            <option value="" class = "truncate">Select a committee</option>
                             <!-- Options will be populated by JS -->
                         </select>
                         <p id="committeePreference1-error" class="error-message"></p>
@@ -475,14 +476,8 @@ As a leading institution committed to intellectual growth and character developm
                 <p class="text-sm text-gray-400">Designed with passion for diplomacy.</p>
             </div>
             <div class="flex space-x-6">
-                <a href="https://facebook.com/yourschoolmun" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-facebook"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-                </a>
-                <a href="https://instagram.com/yourschoolmun" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-200">
+                <a href="https://www.instagram.com/ismun.25?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-200">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-instagram"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
-                </a>
-                <a href="https://linkedin.com/company/yourschoolmun" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-linkedin"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/></svg>
                 </a>
             </div>
         </div>
@@ -493,7 +488,7 @@ As a leading institution committed to intellectual growth and character developm
         const committeesData = [
             { id: 'United_Nations_General_Assembly', name: 'United Nations General Assembly', description: 'Engaging all member states in comprehensive discussions on pressing international matters, aiming to forge consensus and recommend solutions for global challenges.', image: 'https://placehold.co/400x250/a8dadc/000000?text=UNGA' },
             { id: 'United_Nations_Human_Rights_Council', name: 'UN Human Rights Council', description: 'Promoting and protecting human rights worldwide, investigating abuses.', image: 'https://placehold.co/400x250/fca311/000000?text=UNHRC' },
-            { id: 'United_Nations_General_Assembly_First_Committee', name: 'Disarmament and International Security Committee (DISEC)', description: 'Deliberating on disarmament, global security, and arms control.', image: 'https://placehold.co/400x250/e0b1cb/000000?text=DISEC' },
+            { id: 'United_Nations_General_Assembly_First_Committee', name: 'Disarmament & International Security Committee', description: 'Deliberating on disarmament, global security, and arms control.', image: 'https://placehold.co/400x250/e0b1cb/000000?text=DISEC' },
         ];
 
         const secretariatMembersData = [
@@ -502,17 +497,16 @@ As a leading institution committed to intellectual growth and character developm
         ];
 
         const executiveBoardMembersData = [
-            { name: 'mahesh babu', committee: 'UNSC - Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=EW' },
-            { name: 'kamal hasan', committee: 'UNHRC - Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=DG' },
-            { name: 'ram charan', committee: 'DISEC - Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=SB' },
-            { name: 'Michael jackson', committee: 'SPECPOL - Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=ML' },
+            { name: 'Sunny Linn', committee: 'DISEC - Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=SL' },
+            { name: 'Manju Shree', committee: 'DISEC - Co-Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=MS' },
+            { name: 'Jairam', committee: 'UNGA - Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=JR' },
+            { name: 'Navdeep', committee: 'UNGA - CO-Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=ND' },
+            { name: 'Tatvika', committee: 'UUNHRC - Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=TC' },
+            { name: 'Tanvi', committee: 'UNHRC - CO-Chair', image: 'https://placehold.co/150x150/a2d2ff/ffffff?text=TT' },
         ];
 
         const partnersData = [
             { name: 'Partner 1', logo: 'https://placehold.co/150x80/f0f0f0/000000?text=Partner+1' },
-            { name: 'Partner 2', logo: 'https://placehold.co/150x80/f0f0f0/000000?text=Partner+2' },
-            { name: 'Partner 3', logo: 'https://placehold.co/150x80/f0f0f0/000000?text=Partner+3' },
-            { name: 'Partner 4', logo: 'https://placehold.co/150x80/f0f0f0/000000?text=Partner+4' },
         ];
 
         // New Data for Schools and Grades
@@ -532,7 +526,7 @@ As a leading institution committed to intellectual growth and character developm
         const grades = ["8th","9th", "10th", "11th", "12th"];
 
         // Conference Date for Countdown
-        const conferenceDate = new Date(2025, 10, 15, 9, 0, 0); // November 15, 2025, 9:00 AM
+        const conferenceDate = new Date(2025, 9, 10, 10, 0, 0); // November 15, 2025, 9:00 AM
 
         // --- Utility Functions ---
 
